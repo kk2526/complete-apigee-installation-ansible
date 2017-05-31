@@ -1,0 +1,213 @@
+---
+- name: Apigee components should be running
+  hosts: planet
+  strategy: free
+  gather_facts: no
+  roles:
+  - { role: apigee-opdk-start-components, tags: ['start'] }
+
+- name: Validate self MS
+  hosts: ms
+  strategy: free
+  gather_facts: no
+  roles:
+  - { role: apigee-opdk-server-self, server_types: ['ms'], tags: ['self'] }
+
+- name: Validate self RMP
+  hosts: rmp
+  strategy: free
+  gather_facts: no
+  roles:
+  - { role: apigee-opdk-server-self, server_types: ['router', 'mp'], tags: ['self']  }
+
+- name: Validate self QS
+  hosts: qpid
+  strategy: free
+  gather_facts: no
+  roles:
+  - { role: apigee-opdk-server-self, server_types: ['qs'], tags: ['self']  }
+
+- name: Validate self PS
+  hosts: pg
+  strategy: free
+  gather_facts: no
+  roles:
+  - { role: apigee-opdk-server-self, server_types: ['ps'], tags: ['self']  }
+
+- name: Upgrade Cassandra
+  hosts: ds
+  serial: 1
+  tags: ['ds']
+  gather_facts: no
+  vars:
+    upgrade_component: cs,zk
+  pre_tasks:
+  - name: Report current node
+    debug:
+      msg: "Upgrading component {{ upgrade_component }} on {{ inventory_hostname }} ( {{ ansible_hostname }} )"
+  roles:
+  - { role: apigee-opdk-update-component, apigee_component: '{{ upgrade_component }}', tags: ['apigee-upgrade'] }
+
+- name: Upgrade Qpid
+  hosts: qpid
+  serial: 1
+  gather_facts: no
+  tags: ['qpid']
+  vars:
+    server_type_names: ['qs']
+    upgrade_component: qpid
+    block_port: '{{ qpid_messaging_port }}'
+  pre_tasks:
+  - name: Report current node
+    debug:
+      msg: "Upgrading component {{ upgrade_component }} on {{ inventory_hostname }} ( {{ ansible_hostname }} )"
+  roles:
+  - { role: apigee-opdk-set-reachable, reachability: False, server_types: '{{ server_type_names }}' }
+  - { role: apigee-opdk-iptables-port-block, destination_port: '{{ block_port }}' }
+  - { role: apigee-opdk-update-component,  apigee_component: '{{ upgrade_component }}' }
+  - { role: apigee-opdk-iptables-flush }
+  - { role: apigee-opdk-set-reachable, reachability: True, server_types: '{{ server_type_names }}' }
+
+- name: Upgrade Ldap
+  hosts: ldap
+  tags: ['ldap']
+  serial: 1
+  gather_facts: no
+  vars:
+    hosts: ldap
+    upgrade_component: ldap
+  pre_tasks:
+  - name: Report current node
+    debug:
+      msg: "Upgrading component {{ upgrade_component }} on {{ inventory_hostname }} ( {{ ansible_hostname }} )"
+  roles:
+  - { role: apigee-opdk-update-component, apigee_component: '{{ upgrade_component }}' }
+
+- name: Upgrade Qpid Edge Components
+  hosts: qpid
+  serial: 1
+  gather_facts: no
+  tags: ['qpid_edge']
+  vars:
+    upgrade_component: edge
+    block_port: '{{ qpid_messaging_port }}'
+    server_type_names: ['qs']
+  pre_tasks:
+  - name: Report current node
+    debug:
+      msg: "Upgrading component {{ upgrade_component }} on {{ inventory_hostname }} ( {{ ansible_hostname }} )"
+  roles:
+  - { role: apigee-opdk-set-reachable, reachability: False, server_types: '{{ server_type_names }}' }
+  - { role: apigee-opdk-iptables-port-block, destination_port: '{{ block_port }}' }
+  - { role: apigee-opdk-update-component, apigee_component: '{{ upgrade_component }}' }
+  - { role: apigee-opdk-iptables-flush }
+  - { role: apigee-opdk-set-reachable, reachability: True, server_types: '{{ server_type_names }}' }
+
+- name: Upgrade Management Server Edge Components
+  hosts: ms
+  serial: 1
+  gather_facts: no
+  tags: ['ms_edge']
+  vars:
+    upgrade_component: edge
+  pre_tasks:
+  - name: Report current node
+    debug:
+      msg: "Upgrading component {{ upgrade_component }} on {{ inventory_hostname }} ( {{ ansible_hostname }} )"
+  roles:
+  - { role: apigee-opdk-update-component,  apigee_component: '{{ upgrade_component }}' }
+
+- name: Upgrade Router & Message Processor
+  hosts: rmp
+  serial: 1
+  gather_facts: no
+  tags: ['rmp']
+  vars:
+    server_type_names: ['router', 'mp']
+    upgrade_component: edge
+  pre_tasks:
+  - name: Report current node
+    debug:
+      msg: "Upgrading component {{ upgrade_component }} on {{ inventory_hostname }} ( {{ ansible_hostname }} )"
+  roles:
+  - { role: apigee-opdk-set-reachable, reachability: False, server_types: '{{ server_type_names }}' }
+  - { role: apigee-opdk-update-component,  apigee_component: '{{ upgrade_component }}' }
+  - { role: apigee-opdk-set-reachable, reachability: True, server_types: '{{ server_type_names }}' }
+
+- name: Upgrade UI
+  hosts: ui
+  serial: 1
+  gather_facts: no
+  tags: ['ui']
+  vars:
+    upgrade_component: ui
+  pre_tasks:
+  - name: Report current node
+    debug:
+      msg: "Upgrading component {{ upgrade_component }} on {{ inventory_hostname }} ( {{ ansible_hostname }} )"
+  roles:
+  - { role: apigee-opdk-update-component,  apigee_component: '{{ upgrade_component }}' }
+
+- name: Upgrade PG in DC-1
+  include: upgrade-edge-postgres.yml
+  tags: ['pg']
+
+- include: apigee-log-config-files.yml
+  vars:
+    hosts: dc-1-ds
+  tags: ['logs']
+
+- include: apigee-log-config-files.yml
+  vars:
+    hosts: dc-2-ds
+  tags: ['logs']
+
+- include: apigee-log-config-files.yml
+  vars:
+    hosts: dc-1-ms
+  tags: ['logs']
+
+- include: apigee-log-config-files.yml
+  vars:
+    hosts: dc-2-ms
+  tags: ['logs']
+
+- include: apigee-log-config-files.yml
+  vars:
+    hosts: dc-1-rmp
+  tags: ['logs']
+
+- include: apigee-log-config-files.yml
+  vars:
+    hosts: dc-2-rmp
+  tags: ['logs']
+
+- include: apigee-log-config-files.yml
+  vars:
+    hosts: dc-1-qpid
+  tags: ['logs']
+
+- include: apigee-log-config-files.yml
+  vars:
+    hosts: dc-2-qpid
+  tags: ['logs']
+
+- include: apigee-log-config-files.yml
+  vars:
+    hosts: dc-1-pgmaster
+  tags: ['logs']
+
+- include: apigee-log-config-files.yml
+  vars:
+    hosts: dc-2-pgmaster
+  tags: ['logs']
+
+- include: apigee-log-config-files.yml
+  vars:
+    hosts: dc-1-pgstandby
+  tags: ['logs']
+
+- include: apigee-log-config-files.yml
+  vars:
+    hosts: dc-2-pgstandby
+  tags: ['logs']

@@ -1,0 +1,44 @@
+---
+- name: Update the ansible cache
+  hosts: "{{ hosts }}"
+  gather_facts: no
+  tags: ['cache']
+  vars_files:
+  - ~/.apigee/credentials.yml
+  roles:
+  - { role: apigee-opdk-setup-default-settings }
+
+- name: Rolling back installation of {{ component }} on {{ hosts }} to {{ opdk_version }}
+  hosts: '{{ hosts }}'
+  gather_facts: no
+  tags: ['rollback']
+  vars:
+    upgrade_edge: true
+  roles:
+  - { role: apigee-opdk-setup-bootstrap-rollback, remove_apigee: true }
+  - { role: apigee-server-restart, tags: ['restart-server'] }
+
+- name: Rolling back installation of {{ component }} on {{ hosts }} to {{ opdk_version }}
+  hosts: '{{ hosts }}'
+  gather_facts: no
+  tags: ['apigee-pre-req']
+  vars:
+    upgrade_edge: true
+  roles:
+  - { role: apigee-opdk-setup-java-home, tags: ['java_home'] }
+  - { role: apigee-opdk-setup-silent-installation-config, tags: ['apigee-silent-config'], opdk_ldap_type: '2', when: "{{ groups['dc-2'] is defined }}" }
+  - { role: apigee-opdk-setup-silent-installation-config, tags: ['apigee-silent-config'], opdk_ldap_type: '1', when: "{{ groups['dc-2'] is not defined }}" }
+  - { role: apigee-opdk-setup-bootstrap, tags: ['apigee-bootstrap'] }
+
+- name: Rolling back installation of {{ component }} on {{ hosts }} to {{ opdk_version }}
+  hosts: '{{ hosts }}'
+  gather_facts: no
+  tags: ['apigee-component']
+  vars:
+    upgrade_edge: true
+  roles:
+  - { role: apigee-opdk-setup-component-installer, tags: ['installer'] }
+  - { role: apigee-opdk-setup-component, profile: '{{ component }}' }
+  - { role: apigee-opdk-start-components, tags: ['start'] }
+  - { role: apigee-opdk-setup-postgres-master, tags: ['master'], when: analytics_component is defined and analytics_component == 'master' }
+  - { role: apigee-opdk-setup-postgres-standby, tags: ['standby'],  when: analytics_component is defined and analytics_component == 'standby' }

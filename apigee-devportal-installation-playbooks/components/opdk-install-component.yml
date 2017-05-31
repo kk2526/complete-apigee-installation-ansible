@@ -1,0 +1,8 @@
+---
+- hosts: '{{ hosts }}'
+  serial: 1
+  roles:
+  - apigee-opdk-setup-component-installer
+  - { role: apigee-opdk-setup-component, profile: '{{ component_profile }}', opdk_installation_config_file: '{{ opdk_portal_installation_config_file }}' }
+  tags:
+  - apigee-component

@@ -1,0 +1,42 @@
+---
+- name: Update nodes with common OS pre-requisites
+  hosts: planet
+  gather_facts: no
+  tags: ['os-pre-req']
+  pre_tasks:
+  - name: Wait until the node is available
+    become: no
+    delegate_to: 127.0.0.1
+    wait_for:
+      host: '{{ ansible_host }}'
+      state: started
+      delay: "{{ start_check_delay | d(15) }}"
+      timeout: '{{ server_restart_timeout | d(45) }}'
+  roles:
+  - { role: apigee-opdk-ssh-user, tags: ['root'], user: 'root' }
+  - { role: apigee-opdk-setup-os-minimum }
+  - { role: apigee-opdk-setup-apigee-user}
+  - { role: apigee-opdk-setup-os-limits, tags: ['apigee-tuning'] }
+  - { role: apigee-opdk-setup-selinux-disable }
+  - { role: apigee-opdk-shutdown-iptables }
+  - { role: apigee-server-restart, tags: ['restart-server'], when: (selinux_disabled is defined and not selinux_disabled) or (iptables_disabled is defined and not iptables_disabled) }
+  - { role: apigee-opdk-setup-os-common }
+  - { role: apigee-opdk-setup-openjdk, tags: ['openjdk'], jdk_version: '1.8' }
+
+- name: Update Postgres master nodes with OS pre-requisites
+  hosts: pg
+  gather_facts: no
+  tags: ['os-pre-req', 'pg-os-pre-req']
+  roles:
+  - { role: apigee-opdk-enable-swap, tags: ['os-pre-req'] }
+  - { role: apigee-opdk-setup-os-postgres, tags: ['os-pre-req'] }
+  - { role: apigee-opdk-setup-postgres-config, tags: ['os-pre-req'] }
+
+- name: Update Postgres standby nodes with OS pre-requisites
+  hosts: pgstandby
+  gather_facts: no
+  tags: ['os-pre-req', 'pg-os-pre-req']
+  roles:
+  - { role: apigee-opdk-enable-swap, tags: ['os-pre-req'] }
+  - { role: apigee-opdk-setup-os-postgres, tags: ['os-pre-req'] }
+  - { role: apigee-opdk-setup-postgres-config, tags: ['os-pre-req'], clear_pgdata: True }

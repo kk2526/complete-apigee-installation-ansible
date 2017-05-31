@@ -1,0 +1,62 @@
+---
+- src: https://github.com/carlosfrias/apigee-opdk-setup-apigee-user
+
+- src: https://github.com/carlosfrias/apigee-opdk-setup-os-common
+
+- src: https://github.com/carlosfrias/apigee-opdk-setup-os-ds
+
+- src: https://github.com/carlosfrias/apigee-opdk-setup-os-minimum
+
+- src: https://github.com/carlosfrias/apigee-opdk-setup-default-settings
+
+- src: https://github.com/carlosfrias/apigee-opdk-setup-java-home
+
+- src: https://github.com/carlosfrias/apigee-opdk-time-sync
+
+- src: https://github.com/carlosfrias/apigee-opdk-setup-openjdk
+
+- src: https://github.com/carlosfrias/apigee-opdk-setup-os-limits
+
+- src: https://github.com/carlosfrias/apigee-opdk-setup-bootstrap
+
+- src: https://github.com/carlosfrias/apigee-opdk-setup-silent-installation-config
+
+- src: https://github.com/carlosfrias/apigee-opdk-setup-component
+
+- src: https://github.com/carlosfrias/apigee-opdk-setup-component-installer
+
+- src: https://github.com/carlosfrias/apigee-opdk-setup-selinux-disable
+
+- src: https://github.com/carlosfrias/apigee-opdk-shutdown-iptables
+
+- src: https://github.com/carlosfrias/apigee-opdk-setup-org-config
+
+- src: https://github.com/carlosfrias/apigee-opdk-setup-org
+
+- src: https://github.com/carlosfrias/apigee-opdk-setup-validate
+
+- src: https://github.com/carlosfrias/apigee-opdk-setup-validate-cleanup
+
+- src: https://github.com/carlosfrias/apigee-fetch-files
+
+- src: https://github.com/carlosfrias/apigee-opdk-enable-swap
+
+- src: https://github.com/carlosfrias/apigee-opdk-setup-postgres-config
+
+- src: https://github.com/carlosfrias/apigee-opdk-setup-postgres-master
+
+- src: https://github.com/carlosfrias/apigee-opdk-setup-postgres-standby
+
+- src: https://github.com/carlosfrias/apigee-opdk-setup-os-postgres
+
+- src: https://github.com/carlosfrias/apigee-opdk-setup-status
+
+- src: https://github.com/carlosfrias/apigee-opdk-setup-bootstrap-rollback
+
+- src: https://github.com/carlosfrias/apigee-opdk-modules
+
+- src: https://github.com/carlosfrias/apigee-opdk-cache-update
+
+- src: https://github.com/carlosfrias/apigee-opdk-server-self
+
+- src: https://github.com/carlosfrias/apigee-opdk-aws-setup

@@ -1,0 +1,12 @@
+---
+- name: Update planet cache
+  include: apigee-planet-cache.yml
+
+- name: Install and configure OS pre-requisites
+  include: apigee-os-pre-requisites.yml
+
+- name: Install and configure Apigee pre-requisites
+  include: apigee-pre-requisites.yml
+
+- name: Install edge on a single region
+  include: install-edge-region-single-edge.yml

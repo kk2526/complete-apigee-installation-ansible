@@ -1,0 +1,12 @@
+---
+- name: Update cache for planet
+  include: apigee-planet-cache.yml
+
+- name: Install and configure Apigee pre-requisites
+  include: apigee-pre-requisites.yml
+  vars:
+    opdk_ldap_type: '2'
+    upgrade_edge: true
+
+- name: Upgrade Edge instance on planet
+  include: upgrade-edge-planet.yml

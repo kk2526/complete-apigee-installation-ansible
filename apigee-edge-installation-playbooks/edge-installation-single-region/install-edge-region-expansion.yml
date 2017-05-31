@@ -1,0 +1,224 @@
+---
+- name: Update cache for planet
+  include: apigee-planet-cache.yml
+
+- name: Install and configure OS pre-requisites
+  include: apigee-os-pre-requisites.yml
+
+- name: Install and configure Apigee pre-requisites
+  include: apigee-pre-requisites.yml
+  vars:
+    opdk_ldap_type: 2
+
+- name: Configure Cassandra & Zookeeper in DC-2 and DC-1
+  hosts: dc-2-ds, dc-1-ds
+  gather_facts: no
+  serial: 1
+  tags: ['ds']
+  roles:
+  - { role: apigee-opdk-setup-component-installer, tags: ['apigee-component', 'installer'] }
+  - { role: apigee-opdk-setup-component, profile: 'ds', tags: ['apigee-component'] }
+  - { role: apigee-opdk-start-components, tags: ['apigee-component'] }
+  - { role: apigee-opdk-setup-status, tags: ['status'] }
+
+- name: Configure Management Server on DC-1
+  hosts: dc-1-ms
+  serial: 1
+  gather_facts: no
+  tags: ['ms']
+  roles:
+  - { role: apigee-opdk-start-components, tags: ['apigee-component', 'cass-client'] }
+  - { role: apigee-opdk-cassandra-client-update, tags: ['apigee-component', 'cass-client'] }
+  - { role: apigee-opdk-setup-component-installer, tags: ['apigee-component', 'installer'] }
+  - { role: apigee-opdk-setup-component, profile: 'ms',tags: ['apigee-component']  }
+  - { role: apigee-opdk-setup-component, profile: 'ui',tags: ['apigee-component']  }
+  - { role: apigee-opdk-start-components, tags: ['apigee-component'] }
+  - { role: apigee-opdk-server-self, server_types: ['ms'] }
+  - { role: apigee-opdk-setup-status, tags: ['status'] }
+
+- name: Rebuild Cassandra
+  hosts: dc-2-ds
+  serial: 1
+  gather_facts: no
+  tags: ['ms', 'cass-rebuild']
+  vars:
+    opdk_region: dc-1
+  roles:
+  - { role: apigee-opdk-cassandra-rebuild }
+
+- name: Configure Management Server on DC-2
+  hosts: dc-2-ms
+  gather_facts: no
+  serial: 1
+  tags: ['ms']
+  roles:
+  - { role: apigee-opdk-setup-component-installer, tags: ['apigee-component', 'installer'] }
+  - { role: apigee-opdk-setup-component, profile: 'ms',tags: ['apigee-component']  }
+  - { role: apigee-opdk-server-self, server_types: ['ms'] }
+  - { role: apigee-opdk-setup-status, tags: ['status'] }
+
+- name: Configure RMP on DC-2
+  hosts: dc-2-rmp
+  gather_facts: no
+  tags: ['rmp']
+  roles:
+  - { role: apigee-opdk-setup-component-installer, tags: ['apigee-component', 'installer'] }
+  - { role: apigee-opdk-setup-component, profile: 'rmp',tags: ['apigee-component']  }
+  - { role: apigee-opdk-start-components, tags: ['apigee-component'] }
+  - { role: apigee-opdk-server-self, server_types: ['router', 'mp'] }
+  - { role: apigee-opdk-setup-status, tags: ['status'] }
+
+- name: Refresh the RMP setup on DC-1
+  hosts: dc-1-rmp
+  tags: ['rmp']
+  roles:
+  - { role: apigee-opdk-set-reachable, reachability: false, server_types: ['router','mp'] }
+  - { role: apigee-opdk-server-self, server_types: ['router', 'mp'] }
+  - { role: apigee-opdk-setup-component-installer, tags: ['apigee-component', 'installer'] }
+  - { role: apigee-opdk-setup-component, profile: 'rmp',tags: ['apigee-component']  }
+  - { role: apigee-opdk-set-reachable, reachability: true, server_types: ['router','mp'] }
+  - { role: apigee-opdk-server-self, server_types: ['router', 'mp'] }
+  - { role: apigee-opdk-setup-status, tags: ['status'] }
+
+- name: Setup Qpid on DC-2
+  hosts: dc-2-qpid
+  gather_facts: no
+  tags: ['qpid']
+  roles:
+  - { role: apigee-opdk-setup-component-installer, tags: ['apigee-component', 'installer'] }
+  - { role: apigee-opdk-setup-component, profile: 'qs',tags: ['apigee-component']  }
+  - { role: apigee-opdk-start-components, tags: ['apigee-component'] }
+  - { role: apigee-opdk-server-self, server_types: ['qs'] }
+  - { role: apigee-opdk-setup-qpid-add, tags: ['registration'] }
+  - { role: apigee-opdk-setup-status, tags: ['status'] }
+
+- name: Install Postgres on DC-2
+  hosts: dc-2-pg
+  serial: 1
+  gather_facts: no
+  tags: ['pg']
+  roles:
+  - { role: apigee-opdk-setup-component-installer, tags: ['apigee-component', 'installer'] }
+  - { role: apigee-opdk-setup-component, profile: 'ps',tags: ['apigee-component'] }
+  - { role: apigee-opdk-start-components, tags: ['apigee-component'] }
+  - { role: apigee-opdk-server-self, server_types: ['ps'] }
+
+- name: Configure Postgres Master on DC-2
+  hosts: dc-2-pgmaster
+  gather_facts: no
+  serial: 1
+  tags: ['pgmaster']
+  roles:
+  - { role: apigee-opdk-setup-postgres-master }
+  - { role: apigee-opdk-setup-status, tags: ['status'] }
+
+- name: Configure Postgres Standby on DC-2
+  hosts: dc-2-pgstandby
+  gather_facts: no
+  serial: 1
+  tags: ['pgstandby']
+  roles:
+  - { role: apigee-opdk-setup-postgres-standby }
+  - { role: apigee-opdk-setup-status, tags: ['status'] }
+
+- name: Register Postgres on DC-2
+  hosts: dc-2-pgmaster
+  gather_facts: no
+  serial: 1
+  tags: ['pgregister']
+  roles:
+  - { role: apigee-opdk-setup-postgresql-add, pgmaster_group_name: 'dc-2-pgmaster', pgstandby_group_name: 'dc-2-pgstandby' }
+  - { role: apigee-opdk-setup-status, tags: ['status'] }
+
+- name: Configure org on DC-2
+  hosts: dc-2-ms[0]
+  gather_facts: no
+  tags: ['org']
+  roles:
+  - apigee-opdk-setup-org-config
+  - apigee-opdk-setup-org
+
+- name: Validate RMP proxy functionality on DC-2
+  hosts: dc-2-rmp
+  serial: 1
+  gather_facts: no
+  tags: ['validate']
+  roles:
+  - { role: apigee-opdk-setup-validate }
+  - { role: apigee-opdk-setup-validate-cleanup }
+
+- name: Validate internal port connectivity
+  include: install-edge-region-validate-port-connectivity.yml
+  tags: ['port-validator']
+
+- name: Download logs and configs from DC-1-DS
+  include: apigee-log-config-files.yml
+  tags: ['logs']
+  vars:
+    hosts: dc-1-ds
+
+- name: Download logs and configs from DC-2-DS
+  include: apigee-log-config-files.yml
+  tags: ['logs']
+  vars:
+    hosts: dc-2-ds
+
+- name: Download logs and configs from DC-1-MS
+  include: apigee-log-config-files.yml
+  tags: ['logs']
+  vars:
+    hosts: dc-1-ms
+
+- name: Download logs and configs from DC-2-MS
+  include: apigee-log-config-files.yml
+  tags: ['logs']
+  vars:
+    hosts: dc-2-ms
+
+- name: Download logs and configs from DC-1-RMP
+  include: apigee-log-config-files.yml
+  tags: ['logs']
+  vars:
+    hosts: dc-1-rmp
+
+- name: Download logs and configs from DC-2-RMP
+  include: apigee-log-config-files.yml
+  tags: ['logs']
+  vars:
+    hosts: dc-2-rmp
+
+- name: Download logs and configs from DC-1-QPID
+  include: apigee-log-config-files.yml
+  tags: ['logs']
+  vars:
+    hosts: dc-1-qpid
+
+- name: Download logs and configs from DC-2-QPID
+  include: apigee-log-config-files.yml
+  tags: ['logs']
+  vars:
+    hosts: dc-2-qpid
+
+- name: Download logs and configs from DC-1-PGMASTER
+  include: apigee-log-config-files.yml
+  tags: ['logs']
+  vars:
+    hosts: dc-1-pgmaster
+
+- name: Download logs and configs from DC-2-PGMASTER
+  include: apigee-log-config-files.yml
+  tags: ['logs']
+  vars:
+    hosts: dc-2-pgmaster
+
+- name: Download logs and configs from DC-1-PGSTANDBY
+  include: apigee-log-config-files.yml
+  tags: ['logs']
+  vars:
+    hosts: dc-1-pgstandby
+
+- name: Download logs and configs from DC-2-PGSTANDBY
+  include: apigee-log-config-files.yml
+  tags: ['logs']
+  vars:
+    hosts: dc-2-pgstandby

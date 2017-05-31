@@ -1,0 +1,29 @@
+[dc-1]
+localhost       ansible_connection=local
+
+[planet]
+localhost       ansible_connection=local
+
+[ds]
+localhost
+
+[dc-1-ds]
+localhost
+
+[dc-1-ms]
+localhost
+
+[dc-1-ui]
+localhost
+
+[dc-1-ldap]
+localhost
+
+[dc-1-rmp]
+localhost
+
+[dc-1-qpid]
+localhost
+
+[dc-1-pg]
+localhost

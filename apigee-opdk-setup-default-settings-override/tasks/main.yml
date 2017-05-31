@@ -1,0 +1,16 @@
+---
+# tasks file for apigee-opdk-setup-default-settings
+- include: network-interface-name.yml
+
+- include: local_address.yml
+
+- include: public_address.yml
+
+- include: local_mgmt_ip.yml
+
+- include: public_mgmt_ip.yml
+
+- include: update_cache.yml
+
+- include: postgres.yml
+  when: groups['dc-1-pgmaster'] is defined and groups['dc-1-pgstandby'] is defined

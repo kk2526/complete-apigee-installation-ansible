@@ -1,0 +1,27 @@
+---
+- hosts: localhost
+  connection: local
+  gather_facts: nos
+  vars:
+    clean_dirs:
+    - '~/.ansible/tmp/cache'
+    - '~/.ansible/tmp/logs'
+    - '~/.apigee/ssh_keys'
+    - '~/.apigee/logs_configs'
+    - '~/.ansible/roles'
+  tasks:
+  - name: Clean folders
+    ignore_errors: yes
+    file:
+      path: '{{ item }}'
+      state: absent
+    with_items: "{{ clean_dirs }}"
+
+  - name: Reset folders
+    ignore_errors: yes
+    file:
+      path: '{{ item }}'
+      state: directory
+    with_items: "{{ clean_dirs }}"
+
+

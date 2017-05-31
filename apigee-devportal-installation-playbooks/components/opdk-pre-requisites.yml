@@ -1,0 +1,10 @@
+---
+- hosts: '{{ hosts }}'
+  strategy: free
+  roles:
+  - { role: apigee-opdk-setup-apigee-user, tags: ['apigee-user', 'apigee-pre-req'] }
+  - { role: apigee-opdk-setup-os-limits, tags: ['apigee-pre-req', 'apigee-tuning'] }
+  - { role: apigee-opdk-portal-os-config, tags: ['apigee-pre-req'] }
+  - { role: apigee-opdk-setup-openjdk, tags: ['apigee-pre-req', 'openjdk']}
+  - { role: apigee-opdk-setup-bootstrap, tags: ['apigee-pre-req', 'apigee-bootstrap'] }
+  - { role: apigee-opdk-portal-silent-installation-config, tags: ['apigee-pre-req', 'apigee-silent-config'] }

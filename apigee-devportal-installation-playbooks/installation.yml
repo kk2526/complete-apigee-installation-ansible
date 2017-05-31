@@ -1,0 +1,54 @@
+---
+- name: Update the ansible cache
+  hosts: planet
+  tags: ['cache']
+  vars_files:
+  - ~/.apigee/credentials.yml
+  roles:
+  - apigee-opdk-setup-default-settings
+
+- name: Setup OS
+  include: configuration/opdk-setup-os.yml
+  vars:
+    hosts: 'planet'
+  tags:
+  - os
+  - os-pre-req
+
+- name: Update user with root privilege
+  include: configuration/update-user.yml
+  vars:
+    hosts: 'planet'
+    user: 'root'
+  tags:
+  - root-user
+
+- name: Setup Edge pre-requisites
+  include: components/opdk-pre-requisites.yml
+  vars:
+    hosts: 'planet'
+    jdk_version: '1.8'
+  tags:
+  - apigee-pre-req
+
+- name: Setup Developer Portal
+  include: components/opdk-install-component.yml
+  vars:
+    hosts: 'dc-1-devportal'
+    component_profile: 'dp'
+  tags:
+  - ds
+
+- name: Report status for all nodes
+  include: validations/opdk-setup-status.yml
+  vars:
+    hosts: 'planet'
+  tags:
+  - status
+
+- name: Download logs and configs from DC-1-PORTAL
+  include: validations/opdk-setup-log-files.yml
+  vars:
+    hosts: dc-1-portal
+  tags:
+  - logs

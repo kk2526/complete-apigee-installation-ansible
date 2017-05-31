@@ -1,0 +1,179 @@
+---
+- name: Show Zookeeprer Leader
+  hosts: ds
+  gather_facts: no
+  tags: ['zk-leader']
+  serial: 1
+  tasks:
+  - name: Display Zookeeper Leadership
+    shell: "echo srvr | nc localhost 2181 | grep Mode:"
+
+- name: Show Zookeeper Status
+  hosts: ds
+  gather_facts: no
+  tags: ['zk-status']
+  serial: 1
+  tasks:
+  - name: Display Zookeeper Leadership
+    shell: "echo srvr | nc localhost 2181"
+
+- name: Show Cassandra Ring
+  hosts: ds
+  gather_facts: no
+  tags: ['cs-ring']
+  serial: 1
+  tasks:
+  - name: Display Cassandra Ring
+    shell: "{{ nodetool }} ring"
+
+- name: Show Cassandra Status
+  hosts: ds
+  gather_facts: no
+  tags: ['cs-status']
+  serial: 1
+  tasks:
+  - name: Display Cassandra Ring
+    shell: "{{ nodetool }} status"
+
+- name: Show Cassandra Replication Factor
+  hosts: ds
+  gather_facts: no
+  tags: ['cs-replication']
+  tasks:
+  - name: Display Cassandra Replication Factor
+    shell: "{{ cqlsh }} -e 'select * from system.schema_keyspaces' {{ local_address}}"
+
+- name: Show Postgres Master Check
+  hosts: pgmaster
+  gather_facts: no
+  tags: ['pg-master']
+  tasks:
+  - name: Display Postgres Master Status Check
+    shell: "{{ apigee_service }} apigee-postgresql postgres-check-master"
+
+- name: Show Postgres Standby Check
+  hosts: pgstandby
+  gather_facts: no
+  tags: ['pg-standby']
+  tasks:
+  - name: Display Postgres Standby Status Check
+    shell: "{{ apigee_service }} apigee-postgresql postgres-check-standby"
+
+- name: Show Node Status
+  hosts: planet
+  gather_facts: no
+  tags: ['node-status']
+  serial: 1
+  tasks:
+  - name: Display Node Status
+    shell: "{{ apigee_all }} status"
+
+- name: Start Node
+  hosts: planet
+  gather_facts: no
+  tags: ['node-start']
+  serial: 1
+  tasks:
+  - name: Start Node
+    shell: "{{ apigee_all }} start"
+
+- name: Stop Node
+  hosts: planet
+  gather_facts: no
+  tags: ['node-stop']
+  serial: 1
+  tasks:
+  - name: Stop Node
+    shell: "{{ apigee_all }} stop"
+
+- name: Restart Node
+  hosts: planet
+  gather_facts: no
+  tags: ['node-restart']
+  serial: 1
+  tasks:
+  - name: Stop Node
+    shell: "{{ apigee_all }} restart"
+
+- name: Component versions
+  hosts: planet
+  gather_facts: no
+  tags: ['node-version']
+  serial: 1
+  tasks:
+  - name: Component versionsecho $ANS
+    shell: "{{ apigee_all }} version"
+
+- name: Management server self report
+  hosts: ms
+  gather_facts: no
+  tags: ['ms-self']
+  serial: 1
+  tasks:
+  - name: Display self report
+    debug:
+      var: edge_ms_self
+
+- name: Router self report
+  hosts: rmp
+  gather_facts: no
+  tags: ['r-self']
+  serial: 1
+  tasks:
+  - name: Display self report
+    debug:
+      var: edge_router_self
+
+- name: Message Processor self report
+  hosts: rmp
+  tags: ['mp-self']
+  serial: 1
+  tasks:
+  - name: Display self report
+    debug:
+      var: edge_mp_self
+
+- name: Qpid self report
+  hosts: qpid
+  gather_facts: no
+  tags: ['qpid-self']
+  serial: 1
+  tasks:
+  - name: Display self report
+    debug:
+      var: edge_qs_self
+
+- name: Postgres server self report
+  hosts: pg
+  gather_facts: no
+  tags: ['ps-self']
+  serial: 1
+  tasks:
+  - name: Display self report
+    debug:
+      var: edge_ps_self
+
+- name: Display silent-install.conf
+  hosts: planet
+  gather_facts: no
+  tags: ['show-silent-install']
+  tasks:
+  - name: Display silent-install.conf
+    command: "cat {{ opdk_installation_config_file }}"
+
+- name: Restart server
+  hosts: planet
+  serial: 1
+  gather_facts: no
+  tags: ["restart-server"]
+  roles:
+  - { role: apigee-server-restart }
+
+- name: Show local_address
+  hosts: planet
+  gather_facts: no
+  tags: ['local-address']
+  tasks:
+  - name: Show local_address
+    debug:
+      var: local_address

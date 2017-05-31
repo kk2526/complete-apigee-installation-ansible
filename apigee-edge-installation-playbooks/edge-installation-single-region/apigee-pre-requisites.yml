@@ -1,0 +1,11 @@
+---
+- name: Update apigee-pre-req for the planet
+  hosts: planet
+  gather_facts: no
+  strategy: free
+  tags: ['apigee-pre-req']
+  roles:
+  - { role: apigee-opdk-setup-java-home, tags: ['java_home'] }
+  - { role: apigee-opdk-setup-bootstrap, tags: ['apigee-bootstrap'] }
+  - { role: apigee-opdk-setup-silent-installation-config, tags: ['apigee-silent-config'] }
+  - { role: apigee-opdk-setup-component-installer, tags: ['installer'] }

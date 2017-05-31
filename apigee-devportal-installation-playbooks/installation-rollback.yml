@@ -1,0 +1,7 @@
+---
+- name: Rolling back installation and bootstrap
+  hosts: '{{ hosts }}'
+  vars:
+    remove_apigee: false
+  roles:
+  - apigee-opdk-setup-bootstrap-rollback

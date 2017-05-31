@@ -1,0 +1,38 @@
+---
+- hosts: localhost
+  connection: local
+  vars_files:
+  - workspace-github-repos.yml
+  - workspace-folders.yml
+
+  tasks:
+  - name: Create ansible configuration folders
+    file:
+      path: '{{ item }}'
+      state: directory
+    with_items: '{{ configuration_folders }}'
+
+  - name: Git checkout of sample configurations
+    git:
+      repo: '{{ host_repo }}/apigee-opdk-ansible-configuration-samples.git'
+      dest: "{{ ansible_config }}/configurations"
+      accept_hostkey: yes
+
+  - name: Git checkout of sample inventories
+    git:
+      repo: '{{ host_repo }}/apigee-opdk-ansible-inventory-samples.git'
+      dest: "{{ ansible_config }}/inventory"
+      accept_hostkey: yes
+
+  - name: Git checkout of sample playbooks
+    git:
+      repo: '{{ host_repo }}/{{ item.repo }}.git'
+      dest: "{{ item.workspace }}/{{ item.repo }}"
+      accept_hostkey: yes
+    with_items: "{{ repos }}"
+
+  - name: Add empty credentials.yml file to .apigee
+    copy:
+      src: resources/credentials.yml
+      dest: '{{ apigee_config }}/credentials.yml'
+      force: no

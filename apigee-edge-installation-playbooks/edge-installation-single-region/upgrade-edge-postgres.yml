@@ -1,0 +1,126 @@
+---
+- name: Stop Postgres Components
+  hosts: pg
+  gather_facts: no
+  tags: ['pgstop']
+  roles:
+  - { role:  apigee-opdk-stop-components, component_name: 'edge-postgres-server' }
+  - { role:  apigee-opdk-stop-components, component_name: 'apigee-postgresql' }
+
+- name: Stop Qpid components
+  hosts: qpid
+  gather_facts: no
+  tags: ['pgstop']
+  roles:
+  - { role:  apigee-opdk-stop-components, component_name: 'edge-qpid-server' }
+
+- name: Upgrade PS component
+  hosts: pgmaster
+  serial: 1
+  gather_facts: no
+  tags: ['pgmaster']
+  vars:
+    server_type_names: ['ps']
+    upgrade_component: ps
+  pre_tasks:
+  - name: Report current node
+    debug:
+      msg: "Upgrading component {{ upgrade_component }} on {{ inventory_hostname }} ( {{ ansible_hostname }} )"
+  roles:
+  - { role: apigee-opdk-set-reachable, reachability: False, server_types: '{{ server_type_names }}' }
+  - { role: apigee-opdk-update-component,  apigee_component: '{{ upgrade_component }}', validate_ready: false, ignore_errors: true }
+  - { role: apigee-opdk-set-reachable, reachability: True, server_types: '{{ server_type_names }}' }
+
+- name: Upgrade PS edge component
+  hosts: pgmaster
+  serial: 1
+  gather_facts: no
+  vars:
+    server_type_names: ['ps']
+    upgrade_component: edge
+  tags: ['pgmaster_edge']
+  pre_tasks:
+  - name: Report current node
+    debug:
+      msg: "Upgrading component {{ upgrade_component }} on {{ inventory_hostname }} ( {{ ansible_hostname }} )"
+  roles:
+  - { role: apigee-opdk-set-reachable, reachability: False, server_types: '{{ server_type_names }}' }
+  - { role: apigee-opdk-update-component,  apigee_component: '{{ upgrade_component }}', validate_ready: false, ignore_errors: true }
+
+- name: Verify and resolve PG issues with upgrade
+  include: upgrade-edge-postgres-fix-pg_control-file.yml
+  vars:
+    hosts: pgmaster
+  tags: ['pg_control']
+
+- name: Upgrade Postgres master
+  hosts: pgmaster
+  tags: ['db_upgrade']
+  gather_facts: no
+  serial: 1
+  roles:
+  - { role: apigee-opdk-setup-postgres-db-upgrade }
+
+- name: Upgrade Postgres standby
+  hosts: pgstandby
+  serial: 1
+  gather_facts: no
+  vars:
+    server_type_names: ['ps']
+    upgrade_component: ps
+    validate_ready: false
+  tags: ['pgstandby']
+  pre_tasks:
+  - name: Report current node
+    debug:
+      msg: "Upgrading component {{ upgrade_component }} on {{ inventory_hostname }} ( {{ ansible_hostname }} )"
+  roles:
+  - { role: apigee-opdk-stop-components, component_name: 'apigee-postgresql' }
+  - { role: apigee-opdk-setup-postgres-config, tags: ['os-pre-req'], clear_pgdata: True }
+  - { role: apigee-opdk-update-component,  apigee_component: '{{ upgrade_component }}', validate_ready: false, ignore_errors: true }
+  - { role: apigee-opdk-set-reachable, reachability: True, server_types: '{{ server_type_names }}' }
+
+- name: Start Qpid components
+  hosts: qpid
+  tags: ['pgstart']
+  roles:
+  - { role:  apigee-opdk-start-components, component_name: 'edge-qpid-server', component_start_delay: 1 }
+
+- name: Validate that PG Master is master
+  hosts: pgmaster
+  tags: ['pgmaster_validate']
+  serial: 1
+  gather_facts: no
+  tasks:
+  - name: Validate this is postgresql master
+    shell: "{{ apigee_service }} apigee-postgresql postgres-check-master"
+
+- name: Setup and Validate that PG Standby is standby
+  hosts: pgstandby
+  tags: ['pgstandby_validate']
+  gather_facts: no
+  serial: 1
+  vars:
+    cwc_properties:
+    - { key: conf_postgresql_max_wal_senders, value: '3', file_name: 'postgresql' }
+    - { key: conf_postgresql_wal_keep_segments, value: '500', file_name: 'postgresql' }
+  roles:
+  - { role: apigee-opdk-setup-postgres-standby }
+  - { role: apigee-opdk-cwc-update, when: update_max_wal_settings is defined and update_max_wal_settings }
+  - { role: apigee-opdk-stop-components, tags: ['stop'], when: update_max_wal_settings is defined and update_max_wal_settings  }
+  - { role: apigee-opdk-start-components, tags: ['start'],  when: update_max_wal_settings is defined and update_max_wal_settings }
+  - { role: apigee-opdk-setup-postgres-standby, when: update_max_wal_settings is defined and update_max_wal_settings }
+
+- name: Upgrade PG with edge for remaining components
+  hosts: pg
+  tags: ['pg_edge']
+  serial: 1
+  gather_facts: no
+  vars:
+    upgrade_component: edge
+  pre_tasks:
+  - name: Report current node
+    debug:
+      msg: "Upgrading component {{ upgrade_component }} on {{ inventory_hostname }} ( {{ ansible_hostname }} )"
+  roles:
+  - { role: apigee-opdk-update-component,  apigee_component: '{{ upgrade_component }}', validate_ready: false, ignore_errors: true  }

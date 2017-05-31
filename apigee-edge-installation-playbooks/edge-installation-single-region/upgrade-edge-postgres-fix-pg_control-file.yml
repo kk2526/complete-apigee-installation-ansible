@@ -1,0 +1,33 @@
+---
+- name: Restore broken pg_control file on {{ hosts }}
+  hosts: '{{ hosts }}'
+  serial: 1
+  gather_facts: no
+  become: yes
+  vars:
+    pg_control_old: "{{ apigee_installation_home }}/data/apigee-postgresql/pgdata-9.3.old/global/pg_control.old"
+    pg_control: "{{ apigee_installation_home }}/data/apigee-postgresql/pgdata-9.3.old/global/pg_control"
+  tasks:
+  - name: Determine if old pg_control is incorrectly managed
+    stat:
+      path: "{{ pg_control_old }}"
+    register: pg_control
+
+  - block:
+    - block:
+      - name: Restore pg_control file
+        copy:
+          src: "{{ apigee_installation_home }}/data/apigee-postgresql/pgdata-9.3.old/global/pg_control.old"
+          dest: "{{ apigee_installation_home }}/data/apigee-postgresql/pgdata-9.3.old/global/pg_control"
+
+      rescue:
+      - name: Restore pg_control file failed, trying again
+        shell: "sudo cp {{ apigee_installation_home }}/data/apigee-postgresql/pgdata-9.3.old/global/pg_control.old {{ apigee_installation_home }}/data/apigee-postgresql/pgdata-9.3.old/global/pg_control"
+
+    - name: Set pg_control file ownership
+      file:
+        path: "{{ apigee_installation_home }}/data/apigee-postgresql/pgdata-9.3.old/global/pg_control"
+        owner: "{{ opdk_user_name }}"
+        group: "{{ opdk_group_name }}"
+
+    when: pg_control.stat.exists

@@ -1,0 +1,50 @@
+---
+- name: Update the ansible cache
+  include: configuration/update_cache.yml
+  tags:
+  - cache
+
+- include: configuration/opdk-setup-os.yml
+  vars:
+    hosts: 'planet'
+  tags:
+  - os-pre-req
+
+- include: configuration/update-user.yml
+  vars:
+    hosts: 'planet'
+    user: 'root'
+  tags:
+  - root-user
+
+- include: components/opdk-pre-requisites.yml
+  vars:
+    hosts: 'planet'
+    jdk_version: '1.8'
+  tags:
+  - apigee-pre-req
+
+- include: components/opdk-install-component.yml
+  vars:
+    hosts: planet
+    component_profile: 'aio'
+  tags:
+  - apigee-component
+
+- include: configuration/opdk-setup-org.yml
+  vars:
+    hosts: planet
+  tags:
+  - org
+
+- include: validations/opdk-setup-validate.yml
+  vars:
+    hosts: 'dc-1-rmp'
+  tags:
+  - validation
+
+- include: validations/opdk-setup-log-files.yml
+  vars:
+    hosts: planet
+  tags:
+  - logs

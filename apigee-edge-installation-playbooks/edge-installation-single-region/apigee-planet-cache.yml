@@ -1,0 +1,9 @@
+---
+- name: Update nodes with common OS pre-requisites
+  hosts: planet
+  gather_facts: no
+  tags: ['cache']
+  vars_files:
+  - ~/.apigee/credentials.yml
+  roles:
+  - { role: apigee-opdk-setup-default-settings }

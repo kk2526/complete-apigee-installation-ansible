@@ -1,0 +1,26 @@
+---
+- hosts: ms
+  serial: 1
+  roles:
+  - {role: apigee-opdk-server-self, server_types: ['ms'] }
+  tasks:
+  - name: Report management server self
+    debug:
+      var: edge_ms_self
+    when: edge_ms_self is defined
+
+- hosts: rmp
+  serial: 1
+  roles:
+  - {role: apigee-opdk-server-self, server_types: ['router', 'mp'] }
+  serial: 1
+  tasks:
+  - name: Router self report
+    debug:
+      var: edge_router_self
+    when: edge_router_self is defined
+
+  - name: Message processor self report
+    debug:
+      var: edge_mp_self
+    when: edge_mp_self is defined
