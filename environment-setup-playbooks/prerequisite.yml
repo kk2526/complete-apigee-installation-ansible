@@ -4,19 +4,19 @@
 
   tasks:
   - name: Ensure SSH key is generated of control-server
-    command: ssh-keygen -t rsa -f /root/.ssh/id_rsa -N ''
+    command: ssh-keygen -t rsa -f /home/kartik/.ssh/id_rsa -N ''
     args:
-      creates: /root/.ssh/id_rsa
+      creates: /home/kartik/.ssh/id_rsa
 
 - hosts: all
 
   tasks:
-  - selinux:
-     policy: targeted
-     state: permissive
+
+  - selinux: policy=targeted state=permissive
+    become: yes
+    when: ansible_selinux['status'] == 'enabled' and ansible_selinux['mode'] == 'enforcing'
 
   - name: Enable EPEL Repo
     yum:
      name: https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
      state: present
-

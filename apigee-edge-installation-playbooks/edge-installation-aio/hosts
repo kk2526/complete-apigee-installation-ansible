@@ -1,29 +1,43 @@
 [dc-1]
-localhost       ansible_connection=local
+# Listing of all nodes in data center 1 (dc-1)
+localhost              ansible_connection=local
 
+# Listing that references all data centers that compose a planet.
 [planet]
-localhost       ansible_connection=local
-
-[ds]
 localhost
 
+[ds]
+# Listing of all the Cassandra and Zookeeper nodes across the planet
+dc-1-ds
+
 [dc-1-ds]
+# Listing of all the Cassandra and Zookeeper nodes in dc-1
 localhost
 
 [dc-1-ms]
-localhost
-
-[dc-1-ui]
+# Listing of all the Management Server nodes in dc-1
 localhost
 
 [dc-1-ldap]
+# Listing of all OpenLDAP nodes in dc-1
 localhost
 
 [dc-1-rmp]
+# Listing of all Router and Message Processor nodes in dc-1
 localhost
 
 [dc-1-qpid]
+# Listing of all Qpid nodes in dc-1
 localhost
 
 [dc-1-pg]
+# Listing of all Postgres nodes in dc-1
+localhost
+
+[dc-1-ui]
+# Listing of the UI node in dc-1
+localhost
+
+[dc-1-devportal]
+# Listing of the Developer-Portal node in dc-1
 localhost

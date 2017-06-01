@@ -260,7 +260,7 @@ opdk_use_zk_cluster: 'y'
 opdk_cass_clustername: 'Apigee'
 
 # SMTP settings for Edge Configuration
-opdk_skip_smtp: 'n'
+opdk_skip_smtp: 'true'
 opdk_smtp_host: 'smtp.example.com'
 opdk_smtp_port: '25'
 opdk_smtp_user: ''
